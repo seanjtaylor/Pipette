@@ -1,0 +1,44 @@
+=======
+Pipette
+=======
+
+Civilized Data Processing
+
+All data in pipette flows through a pipeline with a source.  Data takes the form of a stream of documents.  Pipelines are lazy, they are only evaluated when you iterate over them or explicitly invoke the pull method.
+
+It works like so:
+
+  from pipette import *
+
+  s = Source('bigdata.csv')
+
+  @s.map
+  def change_variables(doc):
+      """Change some variable names
+
+      Notice that I don't have to return the doc.  The document is returned 
+      to the pipeline unless something non-None was returned.
+      """
+      doc.date = doc.pop('DATE')
+      doc.is_important = int(doc.pop('STATUS') == 'important')
+      doc.category = doc.CAT
+
+  @s.filter
+  def keep_import(doc):
+      """Filter functions must return a boolean.
+      """
+      return doc.is_important
+
+  @s.group_by
+  def date(doc):
+      """Remember that group_by works like itertools.groupby, in that it only
+      groups consecutive entries.
+      """
+      return doc.date
+
+  # slice mutates the pipeline, like all methods
+  s.slice(50)
+
+
+  for date, doc in s:
+      print date, len(doc)
